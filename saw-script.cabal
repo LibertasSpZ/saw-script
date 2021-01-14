@@ -117,9 +117,6 @@ library
     SAWScript.ImportAIG
     SAWScript.Interpreter
     SAWScript.JavaExpr
-    SAWScript.JavaMethodSpec
-    SAWScript.JavaMethodSpec.Evaluator
-    SAWScript.JavaMethodSpecIR
     SAWScript.JavaUtils
     SAWScript.JavaPretty
     SAWScript.Lexer
