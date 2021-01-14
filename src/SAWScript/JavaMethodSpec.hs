@@ -58,6 +58,7 @@ import qualified Text.PrettyPrint.HughesPJ as PP
 
 import Language.JVM.Common (ppFldId)
 import qualified SAWScript.CongruenceClosure as CC
+import SAWScript.JavaCodebase (JavaCodebase)
 import SAWScript.JavaExpr as TC
 import SAWScript.Options hiding (Verbosity)
 import qualified SAWScript.Options as Opts
@@ -425,7 +426,7 @@ overrideFromSpec de pos ir
        key = methodKey method
 
 data VerifyParams = VerifyParams
-  { vpCode    :: Codebase
+  { vpCode    :: JavaCodebase
   , vpContext :: SharedContext
   , vpOpts    :: Options
   , vpSpec    :: JavaMethodSpecIR

@@ -61,10 +61,6 @@ import           Data.Void (absurd)
 import           Prettyprinter
 import           System.IO
 
--- jvm-verifier
--- TODO: transition to Lang.JVM.Codebase from crucible-jvm
-import qualified Verifier.Java.Codebase as CB
-
 -- cryptol
 import qualified Cryptol.Eval.Type as Cryptol (evalValType)
 import qualified Cryptol.TypeCheck.Type as Cryptol
@@ -112,6 +108,7 @@ import qualified SAWScript.Position as SS
 import SAWScript.Options
 import SAWScript.Crucible.JVM.BuiltinsJVM (prepareClassTopLevel)
 
+import SAWScript.JavaCodebase (JavaCodebase)
 import SAWScript.JavaExpr (JavaType(..))
 
 import qualified SAWScript.Crucible.Common as Common
@@ -143,7 +140,7 @@ ppAbortedResult _cc = Common.ppAbortedResult (\_gp -> mempty)
 -- number of classes we load is way too large, and the classes take a
 -- long time to parse and translate.
 
-allClassRefs :: CB.Codebase -> J.ClassName -> IO (Set J.ClassName)
+allClassRefs :: JavaCodebase -> J.ClassName -> IO (Set J.ClassName)
 allClassRefs cb c0 = go seen0 [c0]
   where
     seen0 = Set.fromList CJ.initClasses

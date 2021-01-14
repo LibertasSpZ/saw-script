@@ -25,6 +25,7 @@ data Options = Options
   { importPath       :: [FilePath]
   , classPath        :: [FilePath]
   , jarList          :: [FilePath]
+  , javaBinDirs      :: [FilePath]
   , verbLevel        :: Verbosity
   , simVerbose       :: Int
   , detectVacuity    :: Bool
@@ -61,6 +62,7 @@ defaultOptions
       importPath = ["."]
     , classPath = ["."]
     , jarList = []
+    , javaBinDirs = []
     , verbLevel = Info
     , printShowPos = False
     , printOutFn = printOutWith Info
@@ -123,6 +125,12 @@ options =
      "path"
     )
     pathDesc
+  , Option "b" ["java-bin-dirs"]
+    (ReqArg
+     (\p opts -> return opts { javaBinDirs = javaBinDirs opts ++ splitSearchPath p })
+     "path"
+    )
+    "TODO RGS"
   , Option [] ["output-locations"]
     (NoArg
      (\opts -> return opts { printShowPos = True }))

@@ -71,6 +71,7 @@ import qualified SAWScript.Crucible.JVM.MethodSpecIR ()
 import qualified Verifier.Java.Codebase as JSS
 import qualified Text.LLVM.AST as LLVM (Type)
 import qualified Text.LLVM.PP as LLVM (ppType)
+import SAWScript.JavaCodebase (JavaCodebase)
 import SAWScript.JavaExpr (JavaType(..))
 import SAWScript.JavaPretty (prettyClass)
 import SAWScript.Options (Options(printOutFn),printOutLn,Verbosity)
@@ -167,7 +168,7 @@ data SAW_CFG where
   JVM_CFG :: Crucible.AnyCFG JVM -> SAW_CFG
 
 data BuiltinContext = BuiltinContext { biSharedContext :: SharedContext
-                                     , biJavaCodebase  :: JSS.Codebase
+                                     , biJavaCodebase  :: JavaCodebase
                                      , biBasicSS       :: Simpset
                                      }
   deriving Generic
@@ -383,7 +384,7 @@ data PrimitiveLifecycle
 data TopLevelRO =
   TopLevelRO
   { roSharedContext :: SharedContext
-  , roJavaCodebase  :: JSS.Codebase
+  , roJavaCodebase  :: JavaCodebase
   , roOptions       :: Options
   , roHandleAlloc   :: Crucible.HandleAllocator
   , roPosition      :: SS.Pos
@@ -443,7 +444,7 @@ getPosition = TopLevel (asks roPosition)
 getSharedContext :: TopLevel SharedContext
 getSharedContext = TopLevel (asks roSharedContext)
 
-getJavaCodebase :: TopLevel JSS.Codebase
+getJavaCodebase :: TopLevel JavaCodebase
 getJavaCodebase = TopLevel (asks roJavaCodebase)
 
 getOptions :: TopLevel Options

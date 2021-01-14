@@ -79,6 +79,7 @@ import Verifier.SAW.Term.Pretty (SawDoc, ppTerm, defaultPPOpts)
 
 import qualified SAWScript.CongruenceClosure as CC
 import SAWScript.CongruenceClosure (CCSet)
+import SAWScript.JavaCodebase
 import SAWScript.JavaExpr
 import SAWScript.Position (Pos(..))
 import SAWScript.Utils
@@ -347,12 +348,12 @@ bsAddAssumption :: LogicExpr -> BehaviorSpec -> BehaviorSpec
 bsAddAssumption le bs =
   bs { bsAssumptions = le : bsAssumptions bs }
 
-initMethodSpec :: Pos -> JSS.Codebase
+initMethodSpec :: Pos -> JavaCodebase
                -> JSS.Class -> String
                -> IO JavaMethodSpecIR
 initMethodSpec pos cb thisClass mname = do
   (methodClass,method) <- findMethod cb pos mname thisClass
-  superClasses <- JSS.supers cb thisClass
+  superClasses <- supers cb thisClass
   let this = thisJavaExpr thisClass
       initTypeMap | JSS.methodIsStatic method = Map.empty
                   | otherwise = Map.singleton this (ClassInstance thisClass)
@@ -387,7 +388,7 @@ data JavaMethodSpecIR = MSIR {
     -- | The position of the specification for error reporting purposes.
     specPos :: Pos
     -- | The codebase containing the method being specified.
-  , specCodebase :: JSS.Codebase
+  , specCodebase :: JavaCodebase
     -- | Class used for this instance.
   , specThisClass :: JSS.Class
     -- | Class where method is defined.

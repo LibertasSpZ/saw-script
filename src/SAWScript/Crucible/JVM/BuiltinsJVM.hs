@@ -73,6 +73,7 @@ import Verifier.SAW.TypedTerm (TypedTerm(..), abstractTypedExts)
 
 -- saw-script
 import SAWScript.Builtins(fixPos)
+import SAWScript.JavaCodebase (JavaCodebase)
 import SAWScript.Value
 import SAWScript.Options(Options,simVerbose)
 import SAWScript.Crucible.LLVM.Builtins (setupArg, setupArgs, getGlobalPair, runCFG, baseCryptolType)
@@ -93,6 +94,10 @@ import Debug.Trace
 -- | Use the Codebase implementation from the old Java static simulator
 --
 instance IsCodebase JCB.Codebase where
+  lookupClass cb = J.lookupClassLegacy cb fixPos
+  findMethod  cb = J.findMethodLegacy  cb fixPos
+
+instance IsCodebase JavaCodebase where
   lookupClass cb = J.lookupClass cb fixPos
   findMethod  cb = J.findMethod  cb fixPos
 
