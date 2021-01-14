@@ -52,7 +52,6 @@ common deps
                  cryptonite-conduit,
                  directory,
                  jvm-parser,
-                 jvm-verifier,
                  lens,
                  llvm-pretty,
                  llvm-pretty-bc-parser,
