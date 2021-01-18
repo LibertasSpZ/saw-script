@@ -71,7 +71,6 @@ import Verifier.SAW.TypedAST
 import Verifier.SAW.TypedTerm
 import qualified Verifier.SAW.CryptolEnv as CEnv
 
-import qualified Verifier.Java.Codebase as JCB
 import qualified Verifier.Java.SAWBackend as JavaSAW
 
 import qualified Verifier.SAW.Cryptol.Prelude as CryptolSAW
@@ -421,7 +420,7 @@ buildTopLevelEnv proxy opts =
        simps <- scSimpset sc0 cryptolDefs [] convs
        let sc = rewritingSharedContext sc0 simps
        ss <- basic_ss sc
-       jcb <- JCB.loadCodebase (jarList opts) (classPath opts)
+       jcb <- loadCodebase opts
        currDir <- getCurrentDirectory
        Crucible.withHandleAllocator $ \halloc -> do
        let ro0 = TopLevelRO

@@ -19,11 +19,13 @@ import Control.Applicative
 import Data.Traversable (traverse)
 #endif
 import Control.Exception as CE
+import Control.Monad.Extra (concatMapM)
 import Control.Monad.State
 import Control.Monad.Trans.Except
 import Control.DeepSeq(rnf, NFData(..))
 import Data.Char(isSpace)
 import Data.Data
+import Data.List.Extra (trim)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe
@@ -31,15 +33,20 @@ import Data.Ratio
 import Data.Time.Clock
 import Data.Void
 import Prettyprinter as PP
+import System.Directory.Extra (listDirectory, listFilesRecursive)
+import System.FilePath
+import System.Process (readProcessWithExitCode)
 import System.Time(TimeDiff(..), getClockTime, diffClockTimes, normalizeTimeDiff, toCalendarTime, formatCalendarTime)
 import System.Locale(defaultTimeLocale)
 import qualified System.IO.Error as IOE
+import System.IO.Temp
 import System.Exit
 import Text.Printf
 import Numeric(showFFloat)
 
 import qualified Verifier.Java.Codebase as JSS
 
+import SAWScript.JavaTools
 import SAWScript.Options
 import SAWScript.Position
 
@@ -149,6 +156,74 @@ findMethod cb site nm initClass = impl [] initClass
                            unlines [ show (typedName m) | m <- l ]
                      res = "Please disambiguate method name."
                   in throwIOExecException site (ftext msg) res
+
+-- TODO RGS: Docs
+-- TODO RGS: Should this be upstreamed to crucible-jvm?
+loadCodebase :: Options -> IO JSS.Codebase
+loadCodebase (Options { jarList = jarFiles, classPath = mainClassPaths
+                      , javaBinDirs = javaBinPath }) = do
+  mbJavaTools <- findJavaTools javaBinPath
+  jimageClassPaths <-
+    case mbJavaTools of
+      Nothing        -> pure []
+      Just javaTools -> jlinkAndExtractRuntime javaTools
+  -- TODO RGS: What order should the jlinked classes be searched in?
+  JSS.loadCodebase jarFiles (jimageClassPaths ++ mainClassPaths)
+  where
+    readProcessHelper :: FilePath -> [String] -> IO String
+    readProcessHelper cmd args = do
+      (ec, stdout, stderr)
+        <- readProcessWithExitCode cmd args ""
+      when (ec /= ExitSuccess) $
+        fail $ unlines
+          [ cmd ++ " returned non-zero exit code: " ++ show ec
+          , ""
+          , "Full command:"
+          , cmd ++ " " ++ unwords args
+          , ""
+          , "Standard output:"
+          , stdout
+          , ""
+          , "Standard error:"
+          , stderr
+          ]
+      pure stdout
+
+    -- TODO RGS: Docs
+    jlinkAndExtractRuntime :: JavaTools -> IO [FilePath]
+    jlinkAndExtractRuntime (JavaTools { jdepsPath = jdeps, jlinkPath = jlink
+                                      , jimagePath = jimage }) = do
+      -- First, determine all of the modules needed with the jdeps tool.
+      -- Unfortunately, jdeps requires all .class files to be specified
+      -- individually, so we compute all of the .class files manually by
+      -- traversing the classpaths.
+      classPathFiles <- concatMapM listFilesRecursive mainClassPaths
+      let classFiles = filter (\f -> takeExtension f == ".class") classPathFiles
+      -- TODO RGS: Factor out the scaffolding for readProcessWithExitCode
+      jdepsStdout <- readProcessHelper jdeps ("--print-module-deps" : classFiles ++ jarFiles)
+
+      -- Next, use the modules computed earlier to assemble a minimal runtime
+      -- environment with jlink. We put the resulting JRE in a temporary directory.
+      systemTempDir <- getCanonicalTemporaryDirectory
+      sawTempDir <- createTempDirectory systemTempDir "saw"
+      let sawJRETempDir = sawTempDir </> "jre"
+          jdepsModules  = trim jdepsStdout -- Remove any trailing newlines
+      _jlinkStdout <- readProcessHelper jlink [ "--no-header-files"
+                                              , "--no-man-pages"
+                                              , "--add-modules", jdepsModules
+                                              , "--output", sawJRETempDir
+                                              ]
+
+      -- Finally, extract the contents of the minimal runtime to a temporary
+      -- location. SAW will consult this when loading particular classes when
+      -- they are first encountered.
+      let jimageExtractedDir = sawTempDir </> "jre-extracted"
+      _jimageStdout <- readProcessHelper jimage [ "extract"
+                                                , "--include", "regex:.*\\.class"
+                                                , "--dir", jimageExtractedDir
+                                                , sawJRETempDir </> "lib" </> "modules"
+                                                ]
+      fmap (map (jimageExtractedDir </>)) $ listDirectory jimageExtractedDir
 
 throwFieldNotFound :: JSS.Type -> String -> [String] -> ExceptT String IO a
 throwFieldNotFound tp fieldName names = throwE msg

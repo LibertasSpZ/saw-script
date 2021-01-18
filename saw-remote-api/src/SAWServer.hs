@@ -166,6 +166,7 @@ initialState readFileFn =
      ss <- basic_ss sc
      let jarFiles = []
          classPaths = []
+     -- TODO RGS: Hmmmmmmmm
      jcb <- JSS.loadCodebase jarFiles classPaths
      let bic = BuiltinContext { biSharedContext = sc
                               , biJavaCodebase = jcb
