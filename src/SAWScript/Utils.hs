@@ -40,6 +40,7 @@ import Numeric(showFFloat)
 
 import qualified Verifier.Java.Codebase as JSS
 
+import SAWScript.JavaCodebase (Codebase(..), tryLookupClass)
 import SAWScript.Options
 import SAWScript.Position
 
@@ -109,9 +110,9 @@ showDuration n = printf "%02d:%s" m (show s)
 
 -- | Atempt to find class with given name, or throw ExecException if no class
 -- with that name exists. Class name should be in slash-separated form.
-lookupClass :: JSS.Codebase -> Pos -> JSS.ClassName -> IO JSS.Class
+lookupClass :: Codebase -> Pos -> JSS.ClassName -> IO JSS.Class
 lookupClass cb site nm = do
-  maybeCl <- JSS.tryLookupClass cb nm
+  maybeCl <- tryLookupClass cb nm
   case maybeCl of
     Nothing -> do
      let msg = ftext ("The Java class " ++ JSS.slashesToDots (JSS.unClassName nm) ++ " could not be found.")
@@ -123,9 +124,15 @@ lookupClass cb site nm = do
       in throwIOExecException site msg res
     Just cl -> return cl
 
+-- TODO RGS: This is a really ugly hack to work around the fact that we're
+-- still in the process of migrating from jvm-verifier to crucible-jvm.
+-- See #993.
+lookupClassLegacy :: JSS.Codebase -> Pos -> JSS.ClassName -> IO JSS.Class
+lookupClassLegacy cb = lookupClass $ LegacyCodebase cb
+
 -- | Returns method with given name in this class or one of its subclasses.
 -- Throws an ExecException if method could not be found or is ambiguous.
-findMethod :: JSS.Codebase -> Pos -> String -> JSS.Class -> IO (JSS.Class, JSS.Method)
+findMethod :: Codebase -> Pos -> String -> JSS.Class -> IO (JSS.Class, JSS.Method)
 findMethod cb site nm initClass = impl [] initClass
   where javaClassName = JSS.slashesToDots (JSS.unClassName (JSS.className initClass))
         methodType m = (JSS.methodParameterTypes m, JSS.methodReturnType m)
@@ -154,6 +161,12 @@ findMethod cb site nm initClass = impl [] initClass
                      res = "Please disambiguate method name."
                   in throwIOExecException site (ftext msg) res
 
+-- TODO RGS: This is a really ugly hack to work around the fact that we're
+-- still in the process of migrating from jvm-verifier to crucible-jvm.
+-- See #993.
+findMethodLegacy :: JSS.Codebase -> Pos -> String -> JSS.Class -> IO (JSS.Class, JSS.Method)
+findMethodLegacy cb = findMethod $ LegacyCodebase cb
+
 throwFieldNotFound :: JSS.Type -> String -> [String] -> ExceptT String IO a
 throwFieldNotFound tp fieldName names = throwE msg
   where
@@ -162,7 +175,7 @@ throwFieldNotFound tp fieldName names = throwE msg
           fieldName ++ "."
           ++ "\nAvailable fields:\n" ++ unlines names
 
-findField :: JSS.Codebase -> Pos -> JSS.Type -> String -> ExceptT String IO JSS.FieldId
+findField :: Codebase -> Pos -> JSS.Type -> String -> ExceptT String IO JSS.FieldId
 findField _  _ tp@(JSS.ArrayType _) nm = throwFieldNotFound tp nm []
 findField cb site tp@(JSS.ClassType clName) nm = impl [] =<< lift (lookupClass cb site clName)
   where

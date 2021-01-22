@@ -38,10 +38,6 @@ import qualified Lang.Crucible.FunctionHandle as Crucible (HandleAllocator)
 -- crucible-jvm
 import qualified Lang.Crucible.JVM as CJ
 
--- jvm-verifier
--- TODO: transition to Lang.JVM.Codebase from crucible-jvm
-import qualified Verifier.Java.Codebase as CB
-
 -- jvm-parser
 import qualified Language.JVM.Parser as J
 
@@ -51,6 +47,7 @@ import           Verifier.SAW.TypedTerm (TypedTerm)
 import           SAWScript.Crucible.Common (Sym)
 import qualified SAWScript.Crucible.Common.MethodSpec as MS
 import qualified SAWScript.Crucible.Common.Setup.Type as Setup
+import           SAWScript.JavaCodebase (Codebase)
 
 --------------------------------------------------------------------------------
 -- ** Language features
@@ -180,12 +177,12 @@ instance PPL.Pretty JVMPointsTo where
 --------------------------------------------------------------------------------
 -- *** JVMCrucibleContext
 
-type instance MS.Codebase CJ.JVM = CB.Codebase
+type instance MS.Codebase CJ.JVM = Codebase
 
 data JVMCrucibleContext =
   JVMCrucibleContext
   { _jccJVMClass       :: J.Class
-  , _jccCodebase       :: CB.Codebase
+  , _jccCodebase       :: Codebase
   , _jccJVMContext     :: CJ.JVMContext
   , _jccBackend        :: Sym -- This is stored inside field _ctxSymInterface of Crucible.SimContext; why do we need another one?
   , _jccHandleAllocator :: Crucible.HandleAllocator
@@ -198,7 +195,7 @@ type instance MS.CrucibleContext CJ.JVM = JVMCrucibleContext
 --------------------------------------------------------------------------------
 
 initialDefCrucibleMethodSpecIR ::
-  CB.Codebase ->
+  Codebase ->
   J.ClassName ->
   J.Method ->
   ProgramLoc ->

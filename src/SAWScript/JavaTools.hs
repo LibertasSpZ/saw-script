@@ -7,7 +7,7 @@ Stability   : provisional
 -}
 
 module SAWScript.JavaTools
-  ( findJavaIn
+  ( findJavaIn, findJimageIn, findJavaToolIn
   , findJavaProperty
   , findJavaMajorVersion
   ) where
@@ -18,16 +18,34 @@ import System.Directory
 
 import SAWScript.ProcessUtils
 
--- | @'findJavaIn' javaBinDirs@ searches for an executable named @java@ in the
--- directories in @javaBinDirs@. If @javaBinDirs@ is empty, then the @PATH@ is
--- searched.
+-- | @'findJavaIn' searchPaths@ searches for an executable named @java@ among
+-- the directories in @searchPaths@. If @searchPaths@ is empty, then the @PATH@
+-- is searched.
 --
 -- If the search finds at least one executable, then @Just@ the first result is
 -- returned. If no executables are found, then @Nothing@ is returned.
 findJavaIn :: [FilePath] -> IO (Maybe FilePath)
-findJavaIn javaBinDirs
-  | null javaBinDirs = findExecutable "java"
-  | otherwise        = listToMaybe <$> findExecutablesInDirectories javaBinDirs "java"
+findJavaIn = findJavaToolIn "java"
+
+-- | @'findJavaIn' searchPaths@ searches for an executable named @java@ among
+-- the directories in @searchPaths@. If @searchPaths@ is empty, then the @PATH@
+-- is searched.
+--
+-- If the search finds at least one executable, then @Just@ the first result is
+-- returned. If no executables are found, then @Nothing@ is returned.
+findJimageIn :: [FilePath] -> IO (Maybe FilePath)
+findJimageIn = findJavaToolIn "jimage"
+
+-- | @'findJavaToolIn' toolName searchPaths@ searches for an executable named
+-- @toolName@ among the directories in @searchPaths@. If @searchPaths@ is
+-- empty, then the @PATH@ is searched.
+--
+-- If the search finds at least one executable, then @Just@ the first result is
+-- returned. If no executables are found, then @Nothing@ is returned.
+findJavaToolIn :: FilePath -> [FilePath] -> IO (Maybe FilePath)
+findJavaToolIn toolName searchPaths
+  | null searchPaths = findExecutable toolName
+  | otherwise        = listToMaybe <$> findExecutablesInDirectories searchPaths toolName
 
 -- | @'findJavaProperty' javaPath prop@ invokes @javaPath@ to dump its system
 -- properties (see <https://docs.oracle.com/javase/tutorial/essential/environment/sysprop.html>)

@@ -31,8 +31,8 @@ import Prettyprinter
 
 import Language.JVM.Common
 
-import Verifier.Java.Codebase hiding (lookupClass)
-import Verifier.Java.Simulator as JSS hiding (lookupClass)
+import Verifier.Java.Codebase hiding (lookupClass, Codebase)
+import Verifier.Java.Simulator as JSS hiding (lookupClass, Codebase)
 import Verifier.Java.SAWBackend
 
 import Verifier.SAW.Cryptol (importType, emptyEnv, exportFirstOrderValue)
@@ -46,6 +46,7 @@ import Verifier.SAW.CryptolEnv (schemaNoUser)
 
 import qualified SAWScript.CongruenceClosure as CC
 
+import SAWScript.JavaCodebase (Codebase, legacyCodebaseHack)
 import SAWScript.JavaExpr
 import SAWScript.JavaMethodSpec
 import SAWScript.JavaMethodSpecIR
@@ -64,7 +65,7 @@ import qualified Cryptol.Eval.Concrete as Cryptol (Concrete(..))
 import qualified Cryptol.TypeCheck.AST as Cryptol
 import qualified Cryptol.Utils.PP as Cryptol (pretty)
 
-loadJavaClass :: JSS.Codebase -> String -> IO Class
+loadJavaClass :: Codebase -> String -> IO Class
 loadJavaClass cb =
   lookupClass cb fixPos . mkClassName . dotsToSlashes
 
@@ -112,7 +113,7 @@ symexecJava cls mname inputs outputs satBranches = do
                           " argument in method " ++ methodName meth
       pidx = fromIntegral . localIndexOfParameter meth
   withSAWBackend Nothing $ \sbe -> io $ do
-    runSimulator cb sbe defaultSEH (Just fl) $ do
+    runSimulator (legacyCodebaseHack cb) sbe defaultSEH (Just fl) $ do
       setVerbosity (simVerbose opts)
       assigns <- mapM mkAssign inputs
       let (argAssigns, otherAssigns) = partition (isArg meth . fst) assigns
@@ -164,7 +165,7 @@ extractJava cls mname setup = do
     let fl = defaultSimFlags { alwaysBitBlastBranchTerms =
                                  jsSatBranches setupRes }
         meth = specMethod (jsSpec setupRes)
-    io $ runSimulator cb sbe defaultSEH (Just fl) $ do
+    io $ runSimulator (legacyCodebaseHack cb) sbe defaultSEH (Just fl) $ do
       setVerbosity (simVerbose opts)
       argTypes <- either fail return (getActualArgTypes setupRes)
       args <- mapM (freshJavaVal (Just argsRef) sc) argTypes
@@ -247,8 +248,8 @@ verifyJava cls mname overrides setup = do
       liftIO $ bsCheckAliasTypes pos bs
       liftIO $ printOutLn opts Debug $ "Executing " ++ specName ms ++
                    " at PC " ++ show (bsLoc bs) ++ "."
-      -- runDefSimulator cb sbe $ do
-      runSimulator cb sbe defaultSEH (Just fl) $ do
+      -- runDefSimulator (legacyCodebaseHack cb) sbe $ do
+      runSimulator (legacyCodebaseHack cb) sbe defaultSEH (Just fl) $ do
         setVerbosity (simVerbose opts)
         let prover script vs n g = do
               let exts = getAllExts g
@@ -381,7 +382,7 @@ checkCompatibleType _sc msg aty schema =
                 ]
 
 parseJavaExpr' :: (MonadIO m) =>
-                  JSS.Codebase -> JSS.Class -> JSS.Method -> String
+                  Codebase -> JSS.Class -> JSS.Method -> String
                -> m JavaExpr
 parseJavaExpr' cb cls meth name =
   liftIO (runExceptT (parseJavaExpr cb cls meth name) >>= either fail return)
@@ -401,7 +402,7 @@ getJavaExpr ctx name = do
       , ftext "Maybe you're missing a `java_var` or `java_class_var`?"
       ]
 
-typeJavaExpr :: JSS.Codebase -> String -> JavaType
+typeJavaExpr :: Codebase -> String -> JavaType
              -> JavaSetup (JavaExpr, JavaActualType)
 typeJavaExpr cb name ty = do
   ms <- gets jsSpec

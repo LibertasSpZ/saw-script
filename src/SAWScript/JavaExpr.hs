@@ -72,7 +72,7 @@ import qualified Data.Text as Text
 import qualified Data.Vector as V
 import Text.Read hiding (lift)
 
-import Verifier.Java.Codebase as JSS
+import Verifier.Java.Codebase as JSS hiding (Codebase)
 import Verifier.Java.SAWBackend hiding (basic_ss)
 
 import Verifier.SAW.Cryptol
@@ -81,6 +81,7 @@ import Verifier.SAW.SharedTerm
 import Verifier.SAW.TypedAST (toShortName)
 
 import qualified SAWScript.CongruenceClosure as CC
+import SAWScript.JavaCodebase as TODO
 import SAWScript.Position
 import SAWScript.Utils
 
@@ -302,7 +303,7 @@ ppActualType (ClassInstance x) = JSS.slashesToDots (JSS.unClassName (JSS.classNa
 ppActualType (ArrayInstance l tp) = show tp ++ "[" ++ show l ++ "]"
 ppActualType (PrimitiveType tp) = show tp
 
-parseJavaExpr :: JSS.Codebase -> JSS.Class -> JSS.Method -> String
+parseJavaExpr :: Codebase -> JSS.Class -> JSS.Method -> String
               -> ExceptT String IO JavaExpr
 parseJavaExpr cb cls meth estr = parseParts eparts
   where parseParts :: [String] -> ExceptT String IO JavaExpr
@@ -348,7 +349,7 @@ parseJavaExpr cb cls meth estr = parseParts eparts
                   " referenced by name, but no debug info available"
         parseParts (fname:rest) = do
           let cname = JSS.mkClassName (intercalate "/" (reverse rest))
-          mc <- lift $ tryLookupClass cb cname
+          mc <- lift $ TODO.tryLookupClass cb cname
           case (filter ((== fname) . fieldName) . filter fieldIsStatic . classFields) <$> mc of
             Just [fld] -> do
               let fid = FieldId cname fname (fieldType fld)

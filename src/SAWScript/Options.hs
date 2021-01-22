@@ -207,8 +207,12 @@ processEnv opts = do
     -- --java-bin-dirs or PATH, see the Haddocks for findJavaIn), then use that
     -- to detect the path to Java's standard rt.jar file and add it to the
     -- jarList on Java 8 or earlier. (Later versions of Java do not use
-    -- rt.jar—see #861.) If Java's path is not specified, return the Options
-    -- unchanged.
+    -- rt.jar—see Note [Loading classes from JIMAGE files] in
+    -- SAWScript.JavaCodebase.) If Java's path is not specified, return the
+    -- Options unchanged.
+    --
+    -- TODO RGS: Update the reference to SAWScript.JavaCodebase if/when it
+    -- merges into crucible-jvm.
     addJavaBinDirInducedOpts :: Options -> IO Options
     addJavaBinDirInducedOpts os@Options{javaBinDirs} = do
       mbJavaPath <- findJavaIn javaBinDirs

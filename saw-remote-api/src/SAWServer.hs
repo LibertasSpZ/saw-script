@@ -47,6 +47,7 @@ import Verifier.SAW.TypedTerm (TypedTerm, CryptolModule)
 
 import qualified SAWScript.Crucible.Common.MethodSpec as CMS (CrucibleMethodSpecIR)
 import qualified SAWScript.Crucible.LLVM.MethodSpecIR as CMS (SomeLLVM, LLVMModule)
+import SAWScript.JavaCodebase (loadCodebase)
 import SAWScript.JavaExpr (JavaType(..))
 import SAWScript.Options (defaultOptions)
 import SAWScript.Position (Pos(..))
@@ -167,7 +168,8 @@ initialState readFileFn =
      ss <- basic_ss sc
      let jarFiles = []
          classPaths = []
-     jcb <- JSS.loadCodebase jarFiles classPaths
+         javaBinDirs = []
+     jcb <- loadCodebase jarFiles classPaths javaBinDirs
      let bic = BuiltinContext { biSharedContext = sc
                               , biJavaCodebase = jcb
                               , biBasicSS = ss

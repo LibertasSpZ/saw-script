@@ -58,6 +58,7 @@ import qualified Text.PrettyPrint.HughesPJ as PP
 
 import Language.JVM.Common (ppFldId)
 import qualified SAWScript.CongruenceClosure as CC
+import SAWScript.JavaCodebase (Codebase)
 import SAWScript.JavaExpr as TC
 import SAWScript.Options hiding (Verbosity)
 import qualified SAWScript.Options as Opts
@@ -72,7 +73,7 @@ import SAWScript.VerificationCheck
 
 import Data.JVM.Symbolic.AST (entryBlock)
 
-import Verifier.Java.Simulator hiding (asBool, State, InvalidType)
+import Verifier.Java.Simulator hiding (asBool, State, InvalidType, Codebase)
 import Verifier.Java.SAWBackend hiding (basic_ss)
 
 import Verifier.SAW.Prelude

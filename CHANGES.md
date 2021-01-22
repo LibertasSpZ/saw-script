@@ -2,6 +2,8 @@
 
 ## New Features
 
+SAW now supports verifying Java code using JDK 9 or later.
+
 When verifying Java code, the path to Java can be specified with the new
 `--java-bin-dirs`/`-b` command-line option. Alternatively, if
 `--java-bin-dirs` is not set, then SAW searches the `PATH` to find Java.
